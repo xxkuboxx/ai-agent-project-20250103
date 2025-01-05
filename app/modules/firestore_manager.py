@@ -10,7 +10,6 @@ def create_user_id(gcp_project: str, local_storage):
     doc_ref.set({})
     local_storage.setItem("user_id", doc_ref.id)
     st.session_state["user_id"] = doc_ref.id
-    st.rerun()
 
 def init_chats_ref(gcp_project: str, user_id: str) -> firestore.CollectionReference:
     """Firestoreのchatsコレクションの参照を初期化します。"""
