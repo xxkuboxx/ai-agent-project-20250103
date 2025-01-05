@@ -1,15 +1,13 @@
-import streamlit as st
 from google.cloud import firestore
 
 
-def create_user_id(gcp_project: str, local_storage):
-    """Firestoreに新しい空ドキュメントを作成し、そのIDをユーザーIDとする。
-    ユーザーIDはローカルストレージとセッションステートに保存する。"""
+def create_user_id(gcp_project: str):
+    """Firestoreに新しい空ドキュメントを作成し、そのIDをユーザーIDとする。"""
     db = firestore.Client(project=gcp_project)
     doc_ref = db.collection("users").document()
     doc_ref.set({})
-    local_storage.setItem("user_id", doc_ref.id)
-    st.session_state["user_id"] = doc_ref.id
+    user_id = doc_ref.id
+    return user_id
 
 def init_chats_ref(gcp_project: str, user_id: str) -> firestore.CollectionReference:
     """Firestoreのchatsコレクションの参照を初期化します。"""

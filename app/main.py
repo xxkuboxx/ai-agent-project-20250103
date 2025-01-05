@@ -17,12 +17,16 @@ NEW_CHAT_TITLE = "New Chat"
 def main():
     # Initialize session state
     if "user_id" not in st.session_state:
+        # ローカルストレージにuser_idがある場合は、セッションステートに格納する。
+        # ない場合は新たに作成し、ローカルストレージとセッションステートに格納する。
         local_storage = LocalStorage()
         user_id = local_storage.getItem("user_id")
         if user_id:
             st.session_state["user_id"] = user_id
         else:
-            create_user_id(GCP_PROJECT, local_storage)
+            user_id = create_user_id(GCP_PROJECT)
+            local_storage.setItem("user_id", user_id)
+            st.session_state["user_id"] = user_id
 
     if "chats_ref" not in st.session_state:
         st.session_state.chats_ref = init_chats_ref(GCP_PROJECT, st.session_state.user_id)
