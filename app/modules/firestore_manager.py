@@ -1,17 +1,19 @@
+import os
+
 from google.cloud import firestore
 
 
-def create_user_id(gcp_project: str):
+def create_user_id() -> str:
     """Firestoreに新しい空ドキュメントを作成し、そのIDをユーザーIDとする。"""
-    db = firestore.Client(project=gcp_project)
+    db = firestore.Client(project=os.environ["GCP_PROJECT"])
     doc_ref = db.collection("users").document()
     doc_ref.set({})
     user_id = doc_ref.id
     return user_id
 
-def init_chats_ref(gcp_project: str, user_id: str) -> firestore.CollectionReference:
-    """Firestoreのchatsコレクションの参照を初期化します。"""
-    db = firestore.Client(project=gcp_project)
+def fetch_chats_ref(user_id: str) -> firestore.CollectionReference:
+    """Firestoreのuser_idに紐づくchatsコレクションをフェッチします。"""
+    db = firestore.Client(project=os.environ["GCP_PROJECT"])
     user_ref = db.collection("users").document(user_id)
     return user_ref.collection("chats")
 

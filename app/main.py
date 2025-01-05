@@ -6,7 +6,7 @@ from dotenv import load_dotenv
 load_dotenv()
 
 from modules.chat_manager import handle_user_input
-from modules.firestore_manager import create_user_id, init_chats_ref
+from modules.firestore_manager import create_user_id, fetch_chats_ref
 from modules.sidebar_manager import display_sidebar
 
 
@@ -24,12 +24,12 @@ def main():
         if user_id:
             st.session_state["user_id"] = user_id
         else:
-            user_id = create_user_id(GCP_PROJECT)
+            user_id = create_user_id()
             local_storage.setItem("user_id", user_id)
             st.session_state["user_id"] = user_id
 
     if "chats_ref" not in st.session_state:
-        st.session_state.chats_ref = init_chats_ref(GCP_PROJECT, st.session_state.user_id)
+        st.session_state.chats_ref = fetch_chats_ref(st.session_state.user_id)
 
     if "displayed_chat_ref" not in st.session_state:
         st.session_state.displayed_chat_ref = None
