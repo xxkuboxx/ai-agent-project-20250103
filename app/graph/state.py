@@ -7,4 +7,6 @@ from langchain_core.messages import BaseMessage
 
 class State(TypedDict):
     messages: Annotated[List[BaseMessage], add_messages]
-    message_stream: Generator
+    mbti_type: str
+    take_a_break: bool
+    retry_count: int

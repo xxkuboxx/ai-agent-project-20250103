@@ -41,3 +41,4 @@ def display_sidebar(
                 st.button(
                     "削除", on_click=delete_chat, args=(doc,), key=f"delete_button_{i}", type="tertiary"
                 )
+
