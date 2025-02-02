@@ -15,12 +15,7 @@ def create_messages(displayed_chat_messages) -> List[BaseMessage]:
     """
     messages = []
     for data in displayed_chat_messages:
-        if data['role'] == 'user':
-            message = HumanMessage(content=data['content'])
-        elif data['role'] == 'assistant':
-            message = HumanMessage(content=data['content'])
-        else:
-            raise ValueError(f'role({data["role"]}) is invalid value')
+        message = HumanMessage(content=data['content'])
         messages.append(message)
     return messages
 
@@ -62,20 +57,28 @@ def handle_user_input(
     
     # MBTIのメッセージを一人ずつストリーミングで取り出す。
     messages = create_messages(displayed_chat_messages) 
-    for message in stream_graph(messages):
-        with st.chat_message("assistant"):
-            message_placeholder = st.empty()
-            message_placeholder.markdown(message)
+    for type, content in stream_graph(messages):
+        if type == 'message':
+            message = content
+            with st.chat_message("assistant"):
+                message_placeholder = st.empty()
+                message_placeholder.markdown(message)
 
-        # llmの返答をセッションステートとFirestoreに格納
-        assistant_output_data = {
-            "role": "assistant",
-            "content": message,
-            "timestamp": firestore.SERVER_TIMESTAMP
-        }
-        displayed_chat_messages.append(assistant_output_data)
-        if displayed_chat_ref:
-            add_message(displayed_chat_ref, assistant_output_data)
-    
+            # llmの返答をセッションステートとFirestoreに格納
+            assistant_output_data = {
+                "role": "assistant",
+                "content": message,
+                "timestamp": firestore.SERVER_TIMESTAMP
+            }
+            displayed_chat_messages.append(assistant_output_data)
+            if displayed_chat_ref:
+                add_message(displayed_chat_ref, assistant_output_data)
+        elif type == 'minutes':
+            minutes = content
+        else:
+            raise ValueError(f"type({type}) is invalid")
+        
     st.session_state.displayed_chat_messages = displayed_chat_messages
+
+    return minutes
 

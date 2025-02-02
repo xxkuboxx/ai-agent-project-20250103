@@ -40,6 +40,9 @@ def main():
     if "displayed_chat_messages" not in st.session_state:
         st.session_state.displayed_chat_messages = []
 
+    if "minutes" not in st.session_state:
+        st.session_state.minutes = ""
+
     # Sidebar
     with st.sidebar:
         display_sidebar(
@@ -48,6 +51,7 @@ def main():
             NEW_CHAT_TITLE,
         )
 
+    
     # タイトルとメッセージの表示
     title_placeholder = st.empty()
     title_placeholder.markdown(f"# {st.session_state.displayed_chat_title}")
@@ -58,7 +62,8 @@ def main():
     # Chat input
     user_input_text = st.chat_input("質問を入力してください")
     if user_input_text:
-        handle_user_input(
+        user_input_text = f"ユーザー: {user_input_text}"
+        st.session_state.minutes = handle_user_input(
             user_input_text,
             st.session_state.displayed_chat_messages,
             st.session_state.displayed_chat_ref,
@@ -66,6 +71,9 @@ def main():
             st.session_state.displayed_chat_title,
             title_placeholder,
         )
+    
+    # 議事録の表示
+    st.markdown(st.session_state.minutes)
 
 if __name__ == '__main__':
     main()

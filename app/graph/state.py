@@ -10,3 +10,6 @@ class State(TypedDict):
     mbti_type: str
     take_a_break: bool
     retry_count: int
+    max_retry_count: int
+    minutes: str
+    chat_memory: int
