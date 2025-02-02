@@ -8,6 +8,7 @@ def create_new_chat(new_chat_title):
     """新しいチャットを作成します。"""
     st.session_state.displayed_chat_title = new_chat_title
     st.session_state.displayed_chat_messages = []
+    st.session_state.minutes = ""
 
 
 def change_displayed_chat(chat_doc: firestore.DocumentSnapshot):
@@ -15,6 +16,7 @@ def change_displayed_chat(chat_doc: firestore.DocumentSnapshot):
     st.session_state.displayed_chat_ref = chat_doc.reference
     st.session_state.displayed_chat_title = chat_doc.to_dict()["title"]
     st.session_state.displayed_chat_messages = get_chat_messages(chat_doc.reference)
+    st.session_state.minutes = ""
 
 def delete_chat(chat_doc: firestore.DocumentSnapshot):
     """チャット履歴を削除する関数"""
