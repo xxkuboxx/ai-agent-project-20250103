@@ -8,8 +8,7 @@ from langchain_core.messages import BaseMessage
 class State(TypedDict):
     messages: Annotated[List[BaseMessage], add_messages]
     mbti_type: str
-    take_a_break: bool
+    is_speaker_user: bool
     retry_count: int
     max_retry_count: int
-    minutes: str
     chat_memory: int

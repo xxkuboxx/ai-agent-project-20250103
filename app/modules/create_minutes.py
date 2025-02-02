@@ -1,5 +1,4 @@
-from langchain_core.messages import SystemMessage, HumanMessage
-from graph.state import State
+from langchain_core.messages import SystemMessage
 
 from graph.llm import llm
 
@@ -91,11 +90,8 @@ SYSTEN_PROMPT = f"""\
 - [特記事項]
 """
 
-
-def reporter(state: State):
-    messages = state["messages"].copy()
+def create_minutes(messages):
     messages.insert(0, SystemMessage(content=SYSTEN_PROMPT))
     response = llm.with_retry(stop_after_attempt=3).invoke(messages)
     minutes = response.content
-    return {"minutes": minutes}
-
+    return minutes
