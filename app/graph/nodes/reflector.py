@@ -5,20 +5,20 @@ from pydantic import BaseModel, Field
 from graph.llm import llm
 
 
-class TakeABreak(BaseModel):
-    take_a_break: bool = Field(description="**網羅性、正確性、構造性、可読性、実用性**の全てを満たす最高品質の議事録を作成できる場合はTrue, そうでない場合はFalse")
+class IsSpeakerUser(BaseModel):
+    is_speaker_user: bool = Field(description="次の発言がユーザーに求められている場合はTrue, そうでない場合はFalse")
 
 
 SYSTEN_PROMPT = f"""\
-あなたは議論がされつくされたかどうかを判定するエキスパートです。
-今までの会話履歴を元に、**網羅性、正確性、構造性、可読性、実用性**の全てを満たす最高品質の議事録を作成できるかどうか判定してください。
+あなたは次の発言がユーザーに求められているのかどうかを予測するエキスパートです。
+次の発言がユーザーに求められているかどうか判定してください。
 
 "Tips: Make sure to answer in the correct format."
 """
 
 
 def reflector(state: State):
-    llm_structured = llm.with_structured_output(TakeABreak)
+    llm_structured = llm.with_structured_output(IsSpeakerUser)
     chat_memory = state["chat_memory"]
     messages = state["messages"][-chat_memory:].copy()
     messages.insert(0, SystemMessage(content=SYSTEN_PROMPT))
@@ -26,9 +26,9 @@ def reflector(state: State):
 
     # リトライする場合リトライ回数をカウントアップする。
     retry_count = state["retry_count"]
-    if not response.take_a_break:
+    if not response.is_speaker_user:
         retry_count += 1
     
-    return {"take_a_break": response.take_a_break,
+    return {"is_speaker_user": response.is_speaker_user,
             "retry_count": retry_count}
 

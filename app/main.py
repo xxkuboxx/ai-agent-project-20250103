@@ -5,9 +5,10 @@ from streamlit_local_storage import LocalStorage
 from dotenv import load_dotenv
 load_dotenv()
 
-from modules.chat_manager import handle_user_input
+from modules.chat_manager import handle_user_input, create_messages
 from modules.firestore_manager import create_user_id, fetch_chats_ref
 from modules.sidebar_manager import display_sidebar
+from modules.create_minutes import create_minutes
 
 
 GCP_PROJECT = os.environ["GCP_PROJECT"]
@@ -40,14 +41,23 @@ def main():
     if "displayed_chat_messages" not in st.session_state:
         st.session_state.displayed_chat_messages = []
 
-    if "minutes" not in st.session_state:
-        st.session_state.minutes = ""
+    if "minutes_button_clicked" not in st.session_state:
+        st.session_state.minutes_button_clicked = False
+
+    if "user_name" not in st.session_state:
+        st.session_state.user_name = "ユーザー"
 
     # Sidebar
     with st.sidebar:
+        st.session_state.user_name = st.text_input("ユーザー名",  value=st.session_state.user_name)
+        max_retry_count = st.number_input(
+            "最大自動会話回数",
+            min_value=1, max_value=20,
+            value=3, step=1)
+        if st.button("議事録作成"):
+            st.session_state.minutes_button_clicked = True
         display_sidebar(
             st.session_state.chats_ref,
-            st.session_state.displayed_chat_title,
             NEW_CHAT_TITLE,
         )
 
@@ -62,7 +72,7 @@ def main():
     # Chat input
     user_input_text = st.chat_input("質問を入力してください")
     if user_input_text:
-        user_input_text = f"ユーザー: {user_input_text}"
+        user_input_text = f"{st.session_state.user_name}: {user_input_text}"
         st.session_state.minutes = handle_user_input(
             user_input_text,
             st.session_state.displayed_chat_messages,
@@ -70,10 +80,15 @@ def main():
             st.session_state.chats_ref,
             st.session_state.displayed_chat_title,
             title_placeholder,
+            max_retry_count,
         )
-    
-    # 議事録の表示
-    st.markdown(st.session_state.minutes)
+
+    if st.session_state.minutes_button_clicked:
+        # 議事録作成
+        messages = create_messages(st.session_state.displayed_chat_messages)
+        minutes = create_minutes(messages)
+        st.markdown(minutes)
+        st.session_state.minutes_button_clicked = False # ボタンが押された状態をリセット（必要な場合）
 
 if __name__ == '__main__':
     main()

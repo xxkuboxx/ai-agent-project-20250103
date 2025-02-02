@@ -1,6 +1,6 @@
 from typing import List
 
-from langchain_core.messages import BaseMessage, AIMessage, HumanMessage
+from langchain_core.messages import BaseMessage, HumanMessage
 from google.cloud import firestore
 import streamlit as st
 
@@ -26,6 +26,7 @@ def handle_user_input(
     chats_ref: firestore.CollectionReference,
     displayed_chat_title: str,
     title_placeholder: st.delta_generator.DeltaGenerator,
+    max_retry_count: int
 ):
     """ユーザー入力を処理して、LLMからの応答を表示し、Firestoreに保存します。"""
 
@@ -57,28 +58,20 @@ def handle_user_input(
     
     # MBTIのメッセージを一人ずつストリーミングで取り出す。
     messages = create_messages(displayed_chat_messages) 
-    for type, content in stream_graph(messages):
-        if type == 'message':
-            message = content
-            with st.chat_message("assistant"):
-                message_placeholder = st.empty()
-                message_placeholder.markdown(message)
+    for message in stream_graph(messages, max_retry_count):
+        with st.chat_message("assistant"):
+            message_placeholder = st.empty()
+            message_placeholder.markdown(message)
 
-            # llmの返答をセッションステートとFirestoreに格納
-            assistant_output_data = {
-                "role": "assistant",
-                "content": message,
-                "timestamp": firestore.SERVER_TIMESTAMP
-            }
-            displayed_chat_messages.append(assistant_output_data)
-            if displayed_chat_ref:
-                add_message(displayed_chat_ref, assistant_output_data)
-        elif type == 'minutes':
-            minutes = content
-        else:
-            raise ValueError(f"type({type}) is invalid")
-        
+        # llmの返答をセッションステートとFirestoreに格納
+        assistant_output_data = {
+            "role": "assistant",
+            "content": message,
+            "timestamp": firestore.SERVER_TIMESTAMP
+        }
+        displayed_chat_messages.append(assistant_output_data)
+        if displayed_chat_ref:
+            add_message(displayed_chat_ref, assistant_output_data)
     st.session_state.displayed_chat_messages = displayed_chat_messages
 
-    return minutes
 

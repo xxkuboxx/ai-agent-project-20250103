@@ -24,11 +24,9 @@ def delete_chat(chat_doc: firestore.DocumentSnapshot):
 
 def display_sidebar(
     chats_ref: firestore.CollectionReference,
-    displayed_chat_title: str,
     new_chat_title: str,
 ):
     """サイドバーを表示します。"""
-    new_chat_disabled = displayed_chat_title == new_chat_title
     st.button("新しい会話を始める", on_click=create_new_chat,  args=(new_chat_title,), type="primary")
     st.title("過去の会話履歴")
     for i, doc in enumerate(load_chat_doc(chats_ref)):
