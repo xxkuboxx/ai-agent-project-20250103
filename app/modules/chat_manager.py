@@ -4,7 +4,7 @@ from langchain_core.messages import BaseMessage, HumanMessage
 from google.cloud import firestore
 import streamlit as st
 
-from modules.firestore_manager import add_chat, add_message
+from modules.firestore_manager import add_message
 from graph.streaming import stream_graph
 from graph.llm import llm 
 
@@ -19,50 +19,24 @@ def create_messages(displayed_chat_messages) -> List[BaseMessage]:
         messages.append(message)
     return messages
 
-def handle_user_input(
-    user_input_text: str,
-    displayed_chat_messages: list,
-    displayed_chat_ref: firestore.DocumentReference,
-    chats_ref: firestore.CollectionReference,
-    displayed_chat_title: str,
-    title_placeholder: st.delta_generator.DeltaGenerator,
-    max_retry_count: int
-):
-    """ユーザー入力を処理して、LLMからの応答を表示し、Firestoreに保存します。"""
-
-    # ユーザーの入力を表示
-    with st.chat_message("user"):
-        st.markdown(user_input_text)
-
-    # 会話の初めのユーザーの入力の場合はタイトルを作成し、Firestoreに保存
-    if len(displayed_chat_messages) == 0:
-        chat_title_prompt = f"""
-        ChatBotとの会話を開始するためにユーザーが入力した文を与えるので、その内容を要約し会話のタイトルを考えてもらいます。
-        出力は、会話のタイトルのみにしてください。
-        ユーザーの入力文: {user_input_text} """
-        displayed_chat_title = llm.invoke(chat_title_prompt).content.strip()
-        _, displayed_chat_ref = add_chat(chats_ref, displayed_chat_title)
-        st.session_state.displayed_chat_ref = displayed_chat_ref
-        st.session_state.displayed_chat_title = displayed_chat_title
-        title_placeholder.markdown(f"# {st.session_state.displayed_chat_title}")
-
-    # ユーザーの入力テキストをセッションステートとFirestoreに格納
-    user_input_data = {
-        "role": "user",
-        "content": user_input_text,
-        "timestamp": firestore.SERVER_TIMESTAMP,
-    }
-    displayed_chat_messages.append(user_input_data)
-    if displayed_chat_ref:
-        add_message(displayed_chat_ref, user_input_data)
+def create_title(user_input_text: str):
+    chat_title_prompt = f"""
+    ChatBotとの会話を開始するためにユーザーが入力した文を与えるので、その内容を要約し会話のタイトルを考えてもらいます。
+    出力は、会話のタイトルのみにしてください。
+    ユーザーの入力文: {user_input_text} """
+    displayed_chat_title = llm.invoke(chat_title_prompt).content.strip()
+    return displayed_chat_title
     
+def chat_mbtibot(messages,
+                 max_retry_count: int,
+                 displayed_chat_messages: list,
+                 displayed_chat_ref: firestore.DocumentReference,
+                 ):
     # MBTIのメッセージを一人ずつストリーミングで取り出す。
-    messages = create_messages(displayed_chat_messages) 
     for message in stream_graph(messages, max_retry_count):
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
             message_placeholder.markdown(message)
-
         # llmの返答をセッションステートとFirestoreに格納
         assistant_output_data = {
             "role": "assistant",
