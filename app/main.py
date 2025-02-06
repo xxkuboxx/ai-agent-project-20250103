@@ -101,7 +101,8 @@ def main():
         messages = create_messages(st.session_state.displayed_chat_messages)
         chat_mbtibot(messages, max_retry_count,
                      st.session_state.displayed_chat_messages,
-                     st.session_state.displayed_chat_ref)
+                     st.session_state.displayed_chat_ref,
+                     st.session_state.user_name)
 
     if st.session_state.minutes_button_clicked:
         # 議事録作成
@@ -115,7 +116,8 @@ def main():
         messages = create_messages(st.session_state.displayed_chat_messages)
         chat_mbtibot(messages, max_retry_count,
                      st.session_state.displayed_chat_messages,
-                     st.session_state.displayed_chat_ref)
+                     st.session_state.displayed_chat_ref,
+                     st.session_state.user_name)
         st.session_state.ignore_button_clicked = False
 
 if __name__ == '__main__':

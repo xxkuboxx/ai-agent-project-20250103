@@ -29,7 +29,11 @@ def remove_duplicate_names_except_first(text, name):
     result_str = re.sub(regex, remove_name_except_first, text)
     return result_str
 
-def generate_system_prompt(mbti_type, name):
+def generate_system_prompt(mbti_type, name, search_result_text):
+    if search_result_text:
+        search_result_prompt = f"また、以下の「Web検索結果の情報」を元に解決策を端的に提示してください。\n\n### Web検索結果の情報 ###\n{search_result_text}"
+    else:
+        search_result_prompt = ""
     characteristics = MBTI_CHARACTERISTICS[mbti_type]
     system_prompt = f"""\
 あなたは以下の「特性」を持っている会話エージェントです。
@@ -38,7 +42,7 @@ def generate_system_prompt(mbti_type, name):
 なるべく話しかけている相手の名前を言うようにしてください。
 相手の名前は発言が「～: 」となっていたら、～の部分です。
 敬称は自分の特性に合わせて何かつけてもいいですしつけなくてもいいです。
-
+{search_result_prompt}
 
 ### 特性 ###
 {characteristics}
@@ -61,10 +65,6 @@ def generate_system_prompt(mbti_type, name):
 ### コメントテンプレート ###
 コメントの冒頭には必ず「{name}: 」をつけてください。
 冒頭以外には「{name}: 」はつけないでください。
-#### NG例 ####
-{name}: うむ、ラーメンは確かに美味い😋 {name}: 他の美味いものか、それは興味深い問いだな🤔
-#### OK例 ####
-{name}: うむ、ラーメンは確かに美味い😋 他の美味いものか、それは興味深い問いだな🤔
 """
     return system_prompt
 
@@ -87,6 +87,13 @@ def regulate_messages(messages:list[BaseMessage], mbti_type:str) -> list[BaseMes
     return new_messages
 
 def mbti_chatbot(state: State):
+    is_web_search = state["is_web_search"]
+    if is_web_search:
+        search_result_text = state["search_result_text"]
+        search_web_list = state["search_web_list"]
+    else:
+        search_result_text = ""
+        search_web_list = []
     chat_memory = state["chat_memory"]
     messages = state["messages"][-chat_memory:].copy()
     mbti_type = state["mbti_type"]
@@ -96,18 +103,12 @@ def mbti_chatbot(state: State):
     regulated_messages = regulate_messages(messages, mbti_type)
 
     # 選ばれたmbtiタイプの専用のシステムプロンプトを作成し、messagesの先頭に挿入
-    system_prompt = generate_system_prompt(mbti_type, name)
+    system_prompt = generate_system_prompt(mbti_type, name, search_result_text)
     regulated_messages.insert(0, SystemMessage(content=system_prompt))
 
     # 返答結果を受け取る。
     response = llm.with_retry(stop_after_attempt=3).invoke(regulated_messages)
     content = response.content
-    
-    # 何も発言しなかった場合は絵文字を送付
-    if not content:
-        emoji_list = ["😀", "😃", "😄", "😆", "🙂", "🙃", "😇"]
-        emoji = random.choice(emoji_list)
-        content = f"{name}: {emoji}\n"
     
     # 名前を複数回入れてしまっている場合は除去する。
     content = remove_duplicate_names_except_first(content, name)
@@ -115,4 +116,5 @@ def mbti_chatbot(state: State):
     # HumanMessage型にする。
     message = HumanMessage(content=content)
 
-    return {"messages": [message]}
+    return {"messages": [message],
+            "search_web_list": search_web_list}
