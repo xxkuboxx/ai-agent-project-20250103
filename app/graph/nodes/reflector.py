@@ -22,7 +22,6 @@ def generate_system_prompt(user_name):
 """
     return system_prompt
 
-
 def reflector(state: State):
     llm_structured = llm.with_structured_output(IsSpeakerUser)
     user_name = state["user_name"]

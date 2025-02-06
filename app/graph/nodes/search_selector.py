@@ -17,6 +17,7 @@ Web検索が必要である場合True, Web検索が必要ない場合はFalseを
 "Tips: Make sure to answer in the correct format."
 """
 
+
 def search_selector(state: State):
     llm_structured = llm.with_structured_output(IsWebSearch)
     chat_memory = state["chat_memory"]
