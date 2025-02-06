@@ -31,12 +31,19 @@ def chat_mbtibot(messages,
                  max_retry_count: int,
                  displayed_chat_messages: list,
                  displayed_chat_ref: firestore.DocumentReference,
+                 user_name: str
                  ):
     # MBTIのメッセージを一人ずつストリーミングで取り出す。
-    for message in stream_graph(messages, max_retry_count):
+    for message, search_web_list in stream_graph(messages, max_retry_count, user_name):
         with st.chat_message("assistant"):
             message_placeholder = st.empty()
             message_placeholder.markdown(message)
+            for num, search_web in enumerate(search_web_list):
+                if num == 0:
+                    message += "\n\n参考情報:"
+                    message_placeholder.markdown(message)
+                message += f"[{search_web.title}]({search_web.uri})\n"
+                message_placeholder.markdown(message)
         # llmの返答をセッションステートとFirestoreに格納
         assistant_output_data = {
             "role": "assistant",
